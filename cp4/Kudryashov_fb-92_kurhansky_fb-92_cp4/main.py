@@ -103,7 +103,7 @@ class Person():
         self.key_to_send(n)
         text = self.encode(text)
         msg = self.encrypt(text, e, n)
-        sign = self.sign(text, self.private_key[0], self.open_key[0])
+        sign = self.sign(msg, self.private_key[0], self.open_key[0])
         return (msg, sign)
 
     def read_message(self, packet, open_key):
@@ -111,14 +111,20 @@ class Person():
         n, e = open_key
         msg = self.decrypt(msg, self.private_key[0], self.open_key[0])
         
-        if self.check(msg, sign, e, n):
+        if self.check(packet[0], sign, e, n):
             print(f'message: "{self.decode(msg)}"') 
 
         else: print("Error (")
 
+def verify(msg, sign, open_key):
+    n, e = open_key
 
+    print(f"msg={msg}\nsign={gorner(sign, e, n)}")
 
-
+    if msg == gorner(sign, e, n):
+        print("Good!\n")
+    else:
+        print("Not Good!\n")
 
 A = Person()
 B = Person()
@@ -126,11 +132,28 @@ B = Person()
 text = "lol kek cheburek."
 
 packet = A.create_message(text, B.open_key)
-print(f"msg={packet[0]}\nsign={packet[1]}\n")
-B.read_message(packet, A.open_key)
 
+print("\nTESTING a sign")
+
+verify(packet[0], packet[1], A.open_key)
+
+B.read_message(packet, A.open_key)
 text = "Ok, Da."
 
 packet = B.create_message(text, A.open_key)
-print(f"msg={packet[0]}\nsign={packet[1]}\n")
 A.read_message(packet, B.open_key)
+
+# testing a web
+
+def test():
+    leo = Person()
+    print("TESTING ... .")
+    modulus = int("0x831762FE5AB4BA5F6C6E2AA548A74D9391843BED1FB037FF4F2636FE1453AE4EA5E903F336CFA1A41105B1702164E7179971D3454FE592009A9F811F614495B3", 16)
+    exponent = 0x10001
+
+    text = 'LOLKEK'
+    packet = A.create_message(text, (modulus,exponent))
+
+    print(f"Ciphertext => {hex(packet[0])[2:]}")
+
+test()
